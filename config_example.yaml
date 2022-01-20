@@ -1,0 +1,12 @@
+items:
+  mongodb_url: "mongodb+srv://YOURURL"
+  # check cookie response header in developer tools
+  cookie: "me=INSERT_ME_FIELD_HERE; pp=INSERT_PP_FIELD_HERE;"
+  bot_token: "YOUR_BOT_TOKEN"
+  channel: CHANNEL_ID_AS_INTEGER
+tags:
+  Tags:
+    [
+    # Example config to look for drachenlord content, check developer tools to build your own categories
+      { "flags": 9, "promoted": 0, "tags": "Drachenlord" },
+    ]
