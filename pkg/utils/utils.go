@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/valyala/fasthttp"
@@ -29,7 +30,7 @@ func BuildURL(flags int, tags string, promoted int) string {
 func SendPost(url string, caption string, isAudio bool) ([]tb.Message, error) {
 	var media tb.Album
 
-	if isAudio {
+	if isAudio && strings.Contains(url, "mp4") {
 		media = tb.Album{
 			&tb.Video{
 				File:    tb.FromURL(url),
@@ -50,7 +51,7 @@ func SendPost(url string, caption string, isAudio bool) ([]tb.Message, error) {
 }
 
 func BuildMediaURL(media string, isAudio bool) string {
-	if isAudio {
+	if isAudio && strings.HasSuffix(media, ".mp4") {
 		return fmt.Sprintf("https://vid.pr0gramm.com/%s", media)
 	}
 	return fmt.Sprintf("https://img.pr0gramm.com/%s", media)
