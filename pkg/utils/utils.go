@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -41,6 +42,29 @@ func SendPost(url string, caption string, isAudio bool) ([]tb.Message, error) {
 		media = tb.Album{
 			&tb.Photo{
 				File:    tb.FromURL(url),
+				Caption: fmt.Sprintf("#%s", caption),
+			},
+		}
+	}
+
+	return telegram.TelegramBot.Bot.SendAlbum(telegram.TelegramBot.M.Chat, media)
+
+}
+
+func SendPostByte(url string, caption string, isAudio bool, file []byte) ([]tb.Message, error) {
+	var media tb.Album
+
+	if isAudio && strings.Contains(url, "mp4") {
+		media = tb.Album{
+			&tb.Video{
+				File:    tb.FromReader(bytes.NewReader(file)),
+				Caption: fmt.Sprintf("#%s", caption),
+			},
+		}
+	} else {
+		media = tb.Album{
+			&tb.Photo{
+				File:    tb.FromReader(bytes.NewReader(file)),
 				Caption: fmt.Sprintf("#%s", caption),
 			},
 		}

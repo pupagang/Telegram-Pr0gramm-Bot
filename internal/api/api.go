@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/valyala/fasthttp"
@@ -23,6 +24,7 @@ type PostType struct {
 	Posts       []*models.PostItem
 	Caption     string
 	Random      int
+	FailedPosts []*models.PostItem
 }
 
 func sendGetAsync(cookie string, url string, rc chan []byte) error {
@@ -94,7 +96,8 @@ func (p *PostType) CleanPosts() {
 	}
 }
 
-func Watcher(flags int, tags string, promoted int) {
+func Watcher(flags int, tags string, promoted int, wg *sync.WaitGroup) {
+	defer wg.Done()
 	postCategory := &PostType{}
 
 	// to generate captions, we have to do this - sorry
@@ -108,6 +111,7 @@ func Watcher(flags int, tags string, promoted int) {
 	postCategory.GetPosts()
 	postCategory.CleanPosts()
 	postCategory.ProcessPosts()
+	postCategory.ProcessFailedPosts()
 
 	postCategory = nil
 }
@@ -117,8 +121,36 @@ func (p *PostType) ProcessPosts() {
 		_, err := utils.SendPost(x.MediaURL, x.Caption, x.IsVideo)
 		if err != nil {
 			logger.ErrorLogger.Error(fmt.Sprintf("%s Media: %s", err.Error(), x.MediaURL))
+			p.FailedPosts = append(p.FailedPosts, x)
 		}
 		// use random generated waittime here, to prevent tg flood
 		time.Sleep(time.Second * time.Duration(p.Random))
 	}
+}
+
+func (p *PostType) ProcessFailedPosts() {
+	for _, x := range p.FailedPosts {
+		resp, err := DownloadFile(x.MediaURL)
+		if err != nil {
+			logger.ErrorLogger.Error(fmt.Sprintf("%s Media: %s", err.Error(), x.MediaURL))
+		}
+		_, err = utils.SendPostByte(x.MediaURL, x.Caption, x.IsVideo, resp)
+		if err != nil {
+			logger.ErrorLogger.Error(fmt.Sprintf("%s Media: %s", err.Error(), x.MediaURL))
+		}
+
+		resp = nil
+		// use random generated waittime here, to prevent tg flood
+		time.Sleep(time.Second * time.Duration(p.Random))
+	}
+}
+
+func DownloadFile(url string) ([]byte, error) {
+	var dst []byte
+	statusCode, body, err := fasthttp.Get(dst, url)
+	if statusCode != 200 {
+		return nil, err
+	}
+
+	return body, nil
 }

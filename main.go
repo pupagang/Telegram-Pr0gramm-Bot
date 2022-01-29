@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync"
 	"time"
 
 	config "pr0.bot/pkg/configs"
@@ -10,11 +11,14 @@ import (
 )
 
 func main() {
+	var wg sync.WaitGroup
 	for {
 		for _, x := range config.Config.Tags.Tags {
-			go api.Watcher(x.Flags, x.Tags, x.Promoted)
-			time.Sleep(time.Second * 2)
+			wg.Add(1)
+			go api.Watcher(x.Flags, x.Tags, x.Promoted, &wg)
+			time.Sleep(time.Millisecond * 200)
 		}
+		wg.Wait()
 		time.Sleep(time.Minute * 3)
 	}
 }
