@@ -1,0 +1,11 @@
+*.yaml
+*.log
+pr0.bot
+COPYING
+.github/
+README.md
+Dockerfile
+docker-compose.yaml
+.git
+.dockerignore
+.gitignore

@@ -1,0 +1,8 @@
+version: "3.3"
+services:
+  pr0bot:
+    image: pr0bot
+    container_name: pr0bot
+    volumes:
+      - ./config.yaml:/go/src/app/config.yaml
+    restart: always
