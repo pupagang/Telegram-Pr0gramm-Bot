@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"gopkg.in/yaml.v3"
+	"pr0.bot/pkg/logger"
 )
 
 var Config *config
@@ -36,7 +37,12 @@ func init() {
 	filename := "config.yaml"
 	file, _ := os.Open(filename)
 
-	defer file.Close()
+	defer func(file *os.File) {
+		if err := file.Close(); err != nil {
+			logger.ErrorLogger.Error(err.Error())
+		}
+	}(file)
+
 	d := yaml.NewDecoder(file)
 
 	if err := d.Decode(&Config); err != nil {
