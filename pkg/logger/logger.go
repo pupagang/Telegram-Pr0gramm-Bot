@@ -15,7 +15,7 @@ var ErrorLogger *zap.Logger
 
 func init() {
 	currentTime := time.Now().Format("2006-01-02")
-	file, err := os.OpenFile(fmt.Sprintf("%s_logs.log", currentTime), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	file, err := os.OpenFile(fmt.Sprintf("%s_logs.log", currentTime), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		panic(err)
 	}
