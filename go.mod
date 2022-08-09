@@ -5,10 +5,10 @@ go 1.18
 require (
 	github.com/valyala/fasthttp v1.37.0
 	go.mongodb.org/mongo-driver v1.9.1
-	go.uber.org/zap v1.21.0
+	go.uber.org/zap v1.22.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	gopkg.in/telebot.v3 v3.0.0-20220205194740-8adfab48e8b2
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
