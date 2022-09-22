@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"log"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -28,9 +29,8 @@ type tags struct {
 }
 
 type tag struct {
-	Flags    int
-	Promoted int
-	Tags     string
+	Flags int
+	Tags  string
 }
 
 func init() {
@@ -39,13 +39,13 @@ func init() {
 
 	defer func(file *os.File) {
 		if err := file.Close(); err != nil {
-			logger.ErrorLogger.Error(err.Error())
+			logger.SugarLogger.Error(err.Error())
 		}
 	}(file)
 
 	d := yaml.NewDecoder(file)
 
 	if err := d.Decode(&Config); err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 }

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"log"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,17 +16,17 @@ var MongoDBInstance *queries.MongoDB_Client
 func newInstance(url string) *queries.MongoDB_Client {
 	client, err := mongo.NewClient(options.Client().ApplyURI(url))
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	err = client.Connect(context.TODO())
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	err = client.Ping(context.TODO(), readpref.Primary())
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	return &queries.MongoDB_Client{

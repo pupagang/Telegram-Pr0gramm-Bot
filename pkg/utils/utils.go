@@ -15,14 +15,13 @@ import (
 const baseUrl = "pr0gramm.com/api/items/get"
 
 // build urls from given category parameters in yaml
-func BuildURL(flags int, tags string, promoted int) string {
+func BuildURL(flags int, tags string) string {
 	uri := &fasthttp.URI{
 		DisablePathNormalizing: false,
 	}
 	uri.SetScheme("https")
 	uri.SetHost(baseUrl)
 	uri.QueryArgs().Add("flags", fmt.Sprint(flags))
-	uri.QueryArgs().Add("promoted", fmt.Sprint(promoted))
 	uri.QueryArgs().Add("tags", tags)
 
 	return uri.String()
@@ -75,7 +74,7 @@ func SendPostByte(url string, caption string, isAudio bool, file []byte) ([]tb.M
 }
 
 func BuildMediaURL(media string, isAudio bool) string {
-	if isAudio && strings.HasSuffix(media, ".mp4") {
+	if strings.HasSuffix(media, ".mp4") {
 		return fmt.Sprintf("https://vid.pr0gramm.com/%s", media)
 	}
 	return fmt.Sprintf("https://img.pr0gramm.com/%s", media)

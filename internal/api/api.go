@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/valyala/fasthttp"
@@ -18,13 +17,13 @@ import (
 )
 
 type PostType struct {
-	URL         string
-	CurrentTime int64
-	Response    *models.Pr0Response
-	Posts       []*models.PostItem
-	Caption     string
-	Random      int
-	FailedPosts []*models.PostItem
+	URL              string
+	CurrentTime      int64
+	Response         *models.Pr0Response
+	SuccessfullPosts []*models.PostItem
+	Caption          string
+	Random           int
+	FailedPosts      []*models.PostItem
 }
 
 func sendGetAsync(cookie string, url string, rc chan []byte) error {
@@ -49,7 +48,7 @@ func sendGetAsync(cookie string, url string, rc chan []byte) error {
 }
 
 // gets post from given category in yaml
-func (p *PostType) GetPosts() {
+func (p *PostType) GetPosts() error {
 	respChan := make(chan []byte, 1)
 	errGrp, _ := errgroup.WithContext(context.Background())
 
@@ -58,7 +57,7 @@ func (p *PostType) GetPosts() {
 
 	err := errGrp.Wait()
 	if err != nil {
-		logger.ErrorLogger.Error(err.Error())
+		return err
 	}
 
 	var pr0Response models.Pr0Response
@@ -67,19 +66,20 @@ func (p *PostType) GetPosts() {
 
 	err = json.Unmarshal([]byte(cleaned), &pr0Response)
 	if err != nil {
-		logger.ErrorLogger.Error(err.Error())
+		return err
 	}
 	p.Response = &pr0Response
+	return nil
 }
 
 // check if posts are already in db and if older than 48 hours
-func (p *PostType) CleanPosts() {
+func (p *PostType) CleanPosts() error {
 	for _, x := range p.Response.Items {
 		if (p.CurrentTime - 172800) < int64(x.Created) {
-			post := database.MongoDBInstance.SearchOne(int32(x.ID))
+			post := database.MongoDBInstance.PostExists(int32(x.ID))
 			if !post {
 				url := utils.BuildMediaURL(x.Image, x.Audio)
-				p.Posts = append(p.Posts, &models.PostItem{
+				p.SuccessfullPosts = append(p.SuccessfullPosts, &models.PostItem{
 					MediaURL: url,
 					Caption:  p.Caption,
 					IsVideo:  x.Audio,
@@ -87,62 +87,79 @@ func (p *PostType) CleanPosts() {
 
 				err := database.MongoDBInstance.Insert(int64(x.ID))
 				if err != nil {
-					logger.ErrorLogger.Error(err.Error())
+					return err
 				}
-
 			}
-
 		}
 	}
+	return nil
 }
 
-func Watcher(flags int, tags string, promoted int, wg *sync.WaitGroup) {
-	defer wg.Done()
+func Watcher(flags int, tags string) error {
 	postCategory := &PostType{}
 
 	// to generate captions, we have to do this - sorry
 	postCategory.Caption = strings.ReplaceAll(tags, "! s:-100 ", "")
 	postCategory.Caption = strings.ReplaceAll(postCategory.Caption, " ", "")
 
-	postCategory.URL = utils.BuildURL(flags, tags, promoted)
+	postCategory.URL = utils.BuildURL(flags, tags)
 	postCategory.CurrentTime = utils.GenCurrentTime()
 	postCategory.Random = utils.GenRandomTime()
 
-	postCategory.GetPosts()
-	postCategory.CleanPosts()
+	err := postCategory.GetPosts()
+	if err != nil {
+		return err
+	}
+
+	err = postCategory.CleanPosts()
+	if err != nil {
+		return err
+	}
+
 	postCategory.ProcessPosts()
-	postCategory.ProcessFailedPosts()
+	err = postCategory.ProcessFailedPosts()
+	if err != nil {
+		return err
+	}
 
 	postCategory = nil
+
+	return nil
 }
 
 func (p *PostType) ProcessPosts() {
-	for _, x := range p.Posts {
+	for _, x := range p.SuccessfullPosts {
 		_, err := utils.SendPost(x.MediaURL, x.Caption, x.IsVideo)
 		if err != nil {
-			logger.ErrorLogger.Error(fmt.Sprintf("%s Media: %s", err.Error(), x.MediaURL))
 			p.FailedPosts = append(p.FailedPosts, x)
+			logger.SugarLogger.Error(fmt.Sprintf("%s Media: %s\nAdded to failed posts and will try it again", err.Error(), x.MediaURL))
 		}
+
 		// use random generated waittime here, to prevent tg flood
 		time.Sleep(time.Second * time.Duration(p.Random))
 	}
 }
 
-func (p *PostType) ProcessFailedPosts() {
+func (p *PostType) ProcessFailedPosts() error {
 	for _, x := range p.FailedPosts {
 		resp, err := DownloadFile(x.MediaURL)
 		if err != nil {
-			logger.ErrorLogger.Error(fmt.Sprintf("%s Media: %s", err.Error(), x.MediaURL))
+			// keep this logging statement
+			logger.SugarLogger.Error(fmt.Sprintf("%s Media: %s", err.Error(), x.MediaURL))
+			return err
 		}
+
 		_, err = utils.SendPostByte(x.MediaURL, x.Caption, x.IsVideo, resp)
 		if err != nil {
-			logger.ErrorLogger.Error(fmt.Sprintf("%s Media: %s", err.Error(), x.MediaURL))
+			logger.SugarLogger.Error(fmt.Sprintf("%s Media: %s", err.Error(), x.MediaURL))
+			return err
 		}
 
 		resp = nil
 		// use random generated waittime here, to prevent tg flood
 		time.Sleep(time.Second * time.Duration(p.Random))
 	}
+	return nil
 }
 
 func DownloadFile(url string) ([]byte, error) {

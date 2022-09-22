@@ -1,40 +1,20 @@
 package logger
 
 import (
-	"fmt"
-	"os"
-	"time"
+	"log"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
-var InfoLogger *zap.Logger
-var PanicLogger *zap.Logger
-var ErrorLogger *zap.Logger
+var SugarLogger *zap.SugaredLogger
 
 func init() {
-	currentTime := time.Now().Format("2006-01-02")
-	file, err := os.OpenFile(fmt.Sprintf("%s_logs.log", currentTime), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	logger, err := zap.NewProduction()
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
-	InfoLogger = zap.New(zapcore.NewCore(
-		zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
-		file,
-		zap.DebugLevel,
-	))
+	defer logger.Sync() // flushes buffer, if any
+	SugarLogger = logger.Sugar()
 
-	PanicLogger = zap.New(zapcore.NewCore(
-		zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
-		file,
-		zap.PanicLevel,
-	))
-
-	ErrorLogger = zap.New(zapcore.NewCore(
-		zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
-		file,
-		zap.ErrorLevel,
-	))
 }

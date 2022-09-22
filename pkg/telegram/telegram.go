@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"log"
 	"time"
 
 	tb "gopkg.in/telebot.v3"
@@ -24,10 +25,9 @@ func init() {
 		config,
 	)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
-	// this step is needed, really...
 	var chatRecipient tb.Chat
 	chatRecipient.ID = configs.Config.Items.ChannelID
 	TelegramBot.M.Chat = &chatRecipient

@@ -6,7 +6,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"pr0.bot/pkg/logger"
 )
 
 type MongoDB_Client struct {
@@ -20,13 +19,13 @@ type posts struct {
 }
 
 // search post id, to prevent duplicated posts
-func (m *MongoDB_Client) SearchOne(id int32) bool {
+func (m *MongoDB_Client) PostExists(id int32) bool {
 	var post posts
 
 	err := m.Client.Database("main").Collection("posts").FindOne(context.TODO(), bson.M{"id": id}).Decode(&post)
 
 	if err != nil {
-		logger.ErrorLogger.Error(err.Error())
+		return false
 	}
 
 	if post.PostID == 0 {
@@ -38,7 +37,7 @@ func (m *MongoDB_Client) SearchOne(id int32) bool {
 func (m *MongoDB_Client) Insert(id int64) error {
 	_, err := m.Client.Database("main").Collection("posts").InsertOne(context.TODO(), bson.M{"id": id})
 	if err != nil {
-		logger.ErrorLogger.Error(err.Error())
+		return err
 	}
-	return err
+	return nil
 }
