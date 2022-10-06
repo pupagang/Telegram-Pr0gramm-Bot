@@ -7,7 +7,7 @@ require (
 	go.mongodb.org/mongo-driver v1.10.2
 	go.uber.org/zap v1.23.0
 	golang.org/x/sync v0.0.0-20220907140024-f12130a52804
-	gopkg.in/telebot.v3 v3.0.0
+	gopkg.in/telebot.v3 v3.1.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
