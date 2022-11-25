@@ -3,7 +3,7 @@ module pr0.bot
 go 1.18
 
 require (
-	github.com/valyala/fasthttp v1.40.0
+	github.com/valyala/fasthttp v1.42.0
 	go.mongodb.org/mongo-driver v1.10.2
 	go.uber.org/zap v1.23.0
 	golang.org/x/sync v0.0.0-20220907140024-f12130a52804
